@@ -1,24 +1,24 @@
 ---
 - name: Configure Web Server Locally
-  hosts: localhost    # Alvo é a própria máquina
-  connection: local   # Usa a conexão local, não SSH
-  become: yes         # Necessário para instalar pacotes e gerenciar serviços
+  hosts: all
+  become: yes
 
   tasks:
     - name: Ensure all packages are up to date
-      yum:
+      dnf:
         name: '*'
         state: latest
+        update_cache: true
 
     - name: Install Git
-      yum:
+      dnf:
         name: git
         state: present
 
-    - name: Install Nginx on Amazon Linux 2
-      command: amazon-linux-extras install -y nginx1
-      args:
-        creates: /usr/sbin/nginx
+    - name: Install Nginx on Amazon Linux 2023
+      dnf:
+        name: nginx
+        state: present
 
     - name: Ensure Nginx service is started and enabled
       service:
@@ -28,7 +28,7 @@
 
     - name: Clone website repository
       git:
-        repo: 'https://github.com/avanti-dvp/site-exemplo-aws.git' # Pode ser o mesmo repo ou outro
+        repo: 'https://github.com/avanti-dvp/site-exemplo-aws.git'
         dest: '/tmp/website'
         clone: yes
 
@@ -36,12 +36,12 @@
       copy:
         src: "/tmp/website/"
         dest: "/usr/share/nginx/html/"
-        remote_src: yes # src e dest estão na mesma máquina
+        remote_src: yes
         owner: root
         group: nginx
         mode: '0755'
-      notify: 
-      - restart nginx
+      notify:
+        - restart nginx
 
   handlers:
     - name: restart nginx
